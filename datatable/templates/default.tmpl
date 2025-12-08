@@ -1,0 +1,216 @@
+{{define "lvt:datatable:default:v1"}}
+{{if .IsStyled}}
+{{/* Tailwind CSS styled version */}}
+<div class="overflow-hidden" data-datatable="{{.ID}}">
+  {{/* Filter input */}}
+  {{if .FilterValue}}{{/* Show filter UI only if filtering is enabled */}}
+  <div class="mb-4">
+    <input
+      type="text"
+      class="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+      placeholder="Search..."
+      value="{{.FilterValue}}"
+      lvt-input="filter_{{.ID}}"
+    />
+  </div>
+  {{end}}
+
+  {{/* Loading overlay */}}
+  {{if .Loading}}
+  <div class="flex items-center justify-center py-8">
+    <svg class="w-8 h-8 text-blue-600 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+    </svg>
+  </div>
+  {{else}}
+  <div class="overflow-x-auto border border-gray-200 rounded-lg">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-50">
+        <tr>
+          {{if and .Selectable .MultiSelect}}
+          <th class="w-10 px-4 py-3">
+            <input
+              type="checkbox"
+              class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              {{if .AllSelected}}checked{{end}}
+              lvt-click="toggle_all_{{.ID}}"
+            />
+          </th>
+          {{end}}
+          {{range $col := .VisibleColumns}}
+          <th
+            class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider
+              {{if eq $col.Align "center"}}text-center{{else if eq $col.Align "right"}}text-right{{end}}
+              {{if $col.Sortable}}cursor-pointer hover:bg-gray-100{{end}}"
+            {{if $col.Width}}style="width: {{$col.Width}}"{{end}}
+            {{if $col.Sortable}}lvt-click="sort_{{$.ID}}" lvt-data-column="{{$col.ID}}"{{end}}
+          >
+            <span class="flex items-center gap-1 {{if eq $col.Align "center"}}justify-center{{else if eq $col.Align "right"}}justify-end{{end}}">
+              {{$col.Label}}
+              {{if $col.Sortable}}
+              {{if $.IsSortedAsc $col.ID}}
+              <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd" />
+              </svg>
+              {{else if $.IsSortedDesc $col.ID}}
+              <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+              </svg>
+              {{else}}
+              <svg class="w-4 h-4 text-gray-300" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 3a1 1 0 01.707.293l3 3a1 1 0 01-1.414 1.414L10 5.414 7.707 7.707a1 1 0 01-1.414-1.414l3-3A1 1 0 0110 3zm-3.707 9.293a1 1 0 011.414 0L10 14.586l2.293-2.293a1 1 0 011.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+              </svg>
+              {{end}}
+              {{end}}
+            </span>
+          </th>
+          {{end}}
+        </tr>
+      </thead>
+      <tbody class="bg-white divide-y divide-gray-200">
+        {{if .IsEmpty}}
+        <tr>
+          <td colspan="{{len .VisibleColumns}}{{if and .Selectable .MultiSelect}} + 1{{end}}" class="px-4 py-8 text-center text-gray-500">
+            {{.EmptyMessage}}
+          </td>
+        </tr>
+        {{else}}
+        {{range $index, $row := .GetPageRows}}
+        <tr class="{{if $.Striped}}{{if mod $index 2}}bg-gray-50{{end}}{{end}} {{if $.Hoverable}}hover:bg-gray-100{{end}} {{if $row.Selected}}bg-blue-50{{end}}">
+          {{if and $.Selectable $.MultiSelect}}
+          <td class="w-10 px-4 py-3">
+            <input
+              type="checkbox"
+              class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              {{if $row.Selected}}checked{{end}}
+              {{if $row.Disabled}}disabled{{end}}
+              lvt-click="toggle_row_{{$.ID}}"
+              lvt-data-row="{{$row.ID}}"
+            />
+          </td>
+          {{end}}
+          {{range $col := $.VisibleColumns}}
+          <td class="px-4 {{if $.Compact}}py-2{{else}}py-3{{end}} text-sm text-gray-900
+            {{if eq $col.Align "center"}}text-center{{else if eq $col.Align "right"}}text-right{{end}}"
+            {{if and $.Selectable (not $.MultiSelect)}}
+            lvt-click="select_row_{{$.ID}}"
+            lvt-data-row="{{$row.ID}}"
+            {{end}}
+          >
+            {{$row.GetCellValue $col.ID}}
+          </td>
+          {{end}}
+        </tr>
+        {{end}}
+        {{end}}
+      </tbody>
+    </table>
+  </div>
+
+  {{/* Pagination */}}
+  {{if gt .PageSize 0}}
+  <div class="flex items-center justify-between px-4 py-3 bg-white border-t border-gray-200">
+    <div class="text-sm text-gray-700">
+      Showing <span class="font-medium">{{.StartIndex}}</span> to <span class="font-medium">{{.EndIndex}}</span> of <span class="font-medium">{{.TotalRows}}</span> results
+    </div>
+    <div class="flex gap-2">
+      <button
+        type="button"
+        class="px-3 py-1 text-sm border border-gray-300 rounded-md {{if .HasPreviousPage}}hover:bg-gray-50{{else}}opacity-50 cursor-not-allowed{{end}}"
+        {{if .HasPreviousPage}}lvt-click="prev_page_{{.ID}}"{{else}}disabled{{end}}
+      >
+        Previous
+      </button>
+      <button
+        type="button"
+        class="px-3 py-1 text-sm border border-gray-300 rounded-md {{if .HasNextPage}}hover:bg-gray-50{{else}}opacity-50 cursor-not-allowed{{end}}"
+        {{if .HasNextPage}}lvt-click="next_page_{{.ID}}"{{else}}disabled{{end}}
+      >
+        Next
+      </button>
+    </div>
+  </div>
+  {{end}}
+  {{end}}
+</div>
+{{else}}
+{{/* Unstyled semantic HTML version */}}
+<div data-datatable="{{.ID}}">
+  {{if .Loading}}
+  <p>Loading...</p>
+  {{else}}
+  <table>
+    <thead>
+      <tr>
+        {{if and .Selectable .MultiSelect}}
+        <th>
+          <input
+            type="checkbox"
+            {{if .AllSelected}}checked{{end}}
+            lvt-click="toggle_all_{{.ID}}"
+          />
+        </th>
+        {{end}}
+        {{range $col := .VisibleColumns}}
+        <th
+          {{if $col.Sortable}}lvt-click="sort_{{$.ID}}" lvt-data-column="{{$col.ID}}"{{end}}
+        >
+          {{$col.Label}}
+          {{if $.IsSortedAsc $col.ID}}↑{{else if $.IsSortedDesc $col.ID}}↓{{end}}
+        </th>
+        {{end}}
+      </tr>
+    </thead>
+    <tbody>
+      {{if .IsEmpty}}
+      <tr>
+        <td colspan="{{len .VisibleColumns}}">{{.EmptyMessage}}</td>
+      </tr>
+      {{else}}
+      {{range $row := .GetPageRows}}
+      <tr>
+        {{if and $.Selectable $.MultiSelect}}
+        <td>
+          <input
+            type="checkbox"
+            {{if $row.Selected}}checked{{end}}
+            {{if $row.Disabled}}disabled{{end}}
+            lvt-click="toggle_row_{{$.ID}}"
+            lvt-data-row="{{$row.ID}}"
+          />
+        </td>
+        {{end}}
+        {{range $col := $.VisibleColumns}}
+        <td
+          {{if and $.Selectable (not $.MultiSelect)}}
+          lvt-click="select_row_{{$.ID}}"
+          lvt-data-row="{{$row.ID}}"
+          {{end}}
+        >
+          {{$row.GetCellValue $col.ID}}
+        </td>
+        {{end}}
+      </tr>
+      {{end}}
+      {{end}}
+    </tbody>
+  </table>
+
+  {{if gt .PageSize 0}}
+  <div>
+    <span>Showing {{.StartIndex}} to {{.EndIndex}} of {{.TotalRows}}</span>
+    <button
+      type="button"
+      {{if .HasPreviousPage}}lvt-click="prev_page_{{.ID}}"{{else}}disabled{{end}}
+    >Previous</button>
+    <button
+      type="button"
+      {{if .HasNextPage}}lvt-click="next_page_{{.ID}}"{{else}}disabled{{end}}
+    >Next</button>
+  </div>
+  {{end}}
+  {{end}}
+</div>
+{{end}}
+{{end}}
