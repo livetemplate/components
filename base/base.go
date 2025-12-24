@@ -8,6 +8,11 @@ package base
 // Base provides common functionality for all components.
 // Components should embed this struct to gain ID handling and common utilities.
 //
+// IMPORTANT: Base uses exported fields with JSON tags for proper serialization.
+// Do NOT add custom MarshalJSON/UnmarshalJSON to Base - it will break parent
+// struct serialization because Go promotes embedded methods to the parent,
+// making the parent's json.Marshal only serialize Base fields.
+//
 // Example:
 //
 //	type Dropdown struct {
@@ -16,16 +21,18 @@ package base
 //	    Selected *Option
 //	}
 type Base struct {
-	// ID is the unique identifier for this component instance.
+	// ComponentID is the unique identifier for this component instance.
 	// Used in action names like "toggle_{ID}", "select_{ID}".
-	id string
+	// Exported for JSON serialization. Use ID() method to access.
+	ComponentID string `json:"id"`
 
-	// namespace is the component type, e.g., "dropdown", "tabs".
+	// ComponentNamespace is the component type, e.g., "dropdown", "tabs".
 	// Used for action naming and template resolution.
-	namespace string
+	// Exported for JSON serialization. Use Namespace() method to access.
+	ComponentNamespace string `json:"namespace"`
 
 	// Styled indicates whether to use Tailwind CSS classes (true) or semantic HTML only (false).
-	Styled bool
+	Styled bool `json:"styled"`
 }
 
 // NewBase creates a new Base with the given ID and namespace.
@@ -43,26 +50,26 @@ type Base struct {
 //	}
 func NewBase(id, namespace string) Base {
 	return Base{
-		id:        id,
-		namespace: namespace,
-		Styled:    true, // Default to styled (Tailwind CSS)
+		ComponentID:        id,
+		ComponentNamespace: namespace,
+		Styled:             true, // Default to styled (Tailwind CSS)
 	}
 }
 
 // ID returns the component's unique identifier.
 func (b *Base) ID() string {
-	return b.id
+	return b.ComponentID
 }
 
 // Namespace returns the component's type namespace.
 func (b *Base) Namespace() string {
-	return b.namespace
+	return b.ComponentNamespace
 }
 
 // ActionName generates a namespaced action name for this component.
 // For example: ActionName("toggle") returns "toggle_myid" if ID is "myid".
 func (b *Base) ActionName(action string) string {
-	return action + "_" + b.id
+	return action + "_" + b.ComponentID
 }
 
 // SetStyled sets whether to use Tailwind CSS classes.

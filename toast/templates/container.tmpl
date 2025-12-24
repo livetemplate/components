@@ -49,22 +49,24 @@
   {{end}}
 </div>
 {{else}}
-{{/* Unstyled semantic HTML version */}}
+{{/* Unstyled semantic HTML version with essential positioning */}}
 <div
   data-toast-container="{{.ID}}"
   aria-live="polite"
   aria-atomic="true"
+  style="position:fixed;top:1rem;right:1rem;z-index:50;display:flex;flex-direction:column;gap:0.5rem;max-width:320px;"
 >
   {{range .VisibleMessages}}
-  <div role="alert" data-toast="{{.ID}}">
+  <div role="alert" data-toast="{{.ID}}" style="background:var(--pico-background-color,#fff);border:1px solid var(--pico-muted-border-color,#ddd);border-radius:0.5rem;padding:1rem;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
     {{if .Title}}<strong>{{.Title}}</strong>{{end}}
-    {{if .Body}}<p>{{.Body}}</p>{{end}}
+    {{if .Body}}<p style="margin:0.25rem 0 0 0;">{{.Body}}</p>{{end}}
     {{if .Dismissible}}
     <button
       type="button"
       lvt-click="dismiss_toast_{{$.ID}}"
       lvt-data-toast="{{.ID}}"
       aria-label="Dismiss"
+      style="margin-top:0.5rem;"
     >
       Close
     </button>

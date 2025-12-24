@@ -63,13 +63,13 @@
   </div>
 </div>
 {{else}}
-{{/* Unstyled semantic HTML version */}}
-<div data-modal="{{.ID}}" role="alertdialog" aria-modal="true">
-  <div class="overlay"></div>
-  <div class="dialog">
+{{/* Unstyled semantic HTML version with essential positioning */}}
+<div data-modal="{{.ID}}" role="alertdialog" aria-modal="true" style="position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;">
+  <div class="overlay" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);" aria-hidden="true"></div>
+  <div class="dialog" style="position:relative;z-index:1;background:var(--pico-background-color,#fff);padding:1.5rem;border-radius:0.5rem;max-width:400px;width:90%;">
     {{if .HasTitle}}<h3>{{.Title}}</h3>{{end}}
     {{if .HasMessage}}<p>{{.Message}}</p>{{end}}
-    <div class="actions">
+    <div class="actions" style="display:flex;gap:0.5rem;justify-content:flex-end;margin-top:1rem;">
       <button type="button" lvt-click="cancel_{{.ID}}">{{.CancelText}}</button>
       <button type="button" lvt-click="confirm_{{.ID}}">{{.ConfirmText}}</button>
     </div>

@@ -23,6 +23,8 @@
 package datatable
 
 import (
+	"encoding/json"
+
 	"github.com/livetemplate/components/base"
 )
 
@@ -523,4 +525,39 @@ func (r Row) GetCellString(columnID string) string {
 		return s
 	}
 	return ""
+}
+
+// MarshalJSON implements json.Marshaler to include computed fields for RPC serialization.
+// This ensures that methods like VisibleColumns(), GetPageRows() are available as JSON fields
+// when the datatable is serialized and used in templates via RPC.
+func (dt *DataTable) MarshalJSON() ([]byte, error) {
+	// Create an alias to avoid infinite recursion
+	type DataTableAlias DataTable
+
+	// Build computed fields
+	return json.Marshal(&struct {
+		*DataTableAlias
+
+		// Computed fields for template access
+		VisibleColumns  []Column `json:"VisibleColumns"`
+		PageRows        []Row    `json:"PageRows"`
+		StartIndex      int      `json:"StartIndex"`
+		EndIndex        int      `json:"EndIndex"`
+		TotalRowsCount  int      `json:"TotalRows"`
+		HasPreviousPage bool     `json:"HasPreviousPage"`
+		HasNextPage     bool     `json:"HasNextPage"`
+		AllSelectedFlag bool     `json:"AllSelected"`
+		IsEmptyFlag     bool     `json:"IsEmpty"`
+	}{
+		DataTableAlias:  (*DataTableAlias)(dt),
+		VisibleColumns:  dt.VisibleColumns(),
+		PageRows:        dt.GetPageRows(),
+		StartIndex:      dt.StartIndex(),
+		EndIndex:        dt.EndIndex(),
+		TotalRowsCount:  dt.TotalRows(),
+		HasPreviousPage: dt.HasPreviousPage(),
+		HasNextPage:     dt.HasNextPage(),
+		AllSelectedFlag: dt.AllSelected(),
+		IsEmptyFlag:     dt.IsEmpty(),
+	})
 }
